@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Tender Document Package Builder</title>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- PDF-Lib: merge PDFs, create cover page and add footers -->
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+  <!-- PDF.js: read PDFs and count pages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div>
+    <h1 data-i18n="appTitle">Tender Document Package Builder</h1>
+    <p data-i18n="appSubtitle">
+      Check, organize and generate a complete tender PDF package.
+    </p>
+  </div>
+
+  <div class="language-switch">
+    <button id="englishBtn" class="lang-btn active">English</button>
+    <button id="banglaBtn" class="lang-btn">বাংলা</button>
+  </div>
+</header>
+
+
+<main class="container">
+
+  <!-- STEP 1 -->
+  <section class="card">
+    <div class="section-title">
+      <span class="step-number">1</span>
+      <div>
+        <h2 data-i18n="loadRequirements">Load Tender Requirements</h2>
+        <p data-i18n="loadRequirementsHelp">
+          Select the requirements.json file provided with the tender.
+        </p>
+      </div>
+    </div>
+
+    <label class="upload-box">
+      <input
+        type="file"
+        id="requirementsInput"
+        accept=".json,application/json"
+        hidden
+      />
+
+      <span class="upload-icon">📄</span>
+      <strong data-i18n="chooseRequirements">
+        Choose requirements.json
+      </strong>
+    </label>
+
+    <div id="requirementsMessage" class="message hidden"></div>
+  </section>
+
+
+  <!-- TENDER INFORMATION -->
+  <section id="tenderSection" class="card hidden">
+
+    <div class="section-title">
+      <span class="step-number">✓</span>
+
+      <div>
+        <h2 data-i18n="tenderInformation">Tender Information</h2>
+      </div>
+    </div>
+
+    <div class="tender-grid">
+
+      <div>
+        <span data-i18n="tenderId">Tender ID</span>
+        <strong id="tenderIdValue">—</strong>
+      </div>
+
+      <div>
+        <span data-i18n="tenderTitle">Tender Title</span>
+        <strong id="tenderTitleValue">—</strong>
+      </div>
+
+      <div>
+        <span data-i18n="procuringEntity">Procuring Entity</span>
+        <strong id="procuringEntityValue">—</strong>
+      </div>
+
+      <div>
+        <span data-i18n="bidder">Bidder</span>
+        <strong id="bidderValue">—</strong>
+      </div>
+
+      <div>
+        <span data-i18n="submissionDeadline">Submission Deadline</span>
+        <strong id="deadlineValue">—</strong>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- STEP 2 -->
+  <section class="card">
+
+    <div class="section-title">
+      <span class="step-number">2</span>
+
+      <div>
+        <h2 data-i18n="uploadDocuments">
+          Upload Tender Documents
+        </h2>
+
+        <p data-i18n="uploadDocumentsHelp">
+          Upload up to 30 PDF files. Maximum combined size: 50 MB.
+        </p>
+      </div>
+    </div>
+
+    <label class="upload-box">
+
+      <input
+        type="file"
+        id="pdfInput"
+        accept="application/pdf,.pdf"
+        multiple
+        hidden
+      />
+
+      <span class="upload-icon">📚</span>
+
+      <strong data-i18n="choosePdfs">
+        Choose PDF files
+      </strong>
+
+    </label>
+
+    <div id="uploadMessage" class="message hidden"></div>
+
+
+    <div id="uploadedFilesSection" class="hidden">
+
+      <h3 data-i18n="uploadedFiles">
+        Uploaded Files
+      </h3>
+
+      <div id="uploadedFilesList"></div>
+
+    </div>
+
+  </section>
+
+
+  <!-- STEP 3 -->
+  <section id="checklistSection" class="card hidden">
+
+    <div class="section-title">
+
+      <span class="step-number">3</span>
+
+      <div>
+
+        <h2 data-i18n="documentChecklist">
+          Document Checklist
+        </h2>
+
+        <p data-i18n="documentChecklistHelp">
+          Match each uploaded PDF with the correct tender requirement.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th data-i18n="order">Order</th>
+
+            <th data-i18n="document">Document</th>
+
+            <th data-i18n="required">Required</th>
+
+            <th data-i18n="matchedFile">Matched File</th>
+
+            <th data-i18n="expiryDate">Expiry Date</th>
+
+            <th data-i18n="status">Status</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody id="requirementsTableBody"></tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+
+  <!-- PACKAGE STATUS -->
+  <section id="packageStatusSection" class="card hidden">
+
+    <div class="section-title">
+
+      <span class="step-number">4</span>
+
+      <div>
+
+        <h2 data-i18n="packageStatus">
+          Package Status
+        </h2>
+
+        <p id="packageStatusMessage"></p>
+
+      </div>
+
+    </div>
+
+
+    <div class="status-summary">
+
+      <div class="summary-item">
+        <span data-i18n="totalDocuments">Total</span>
+        <strong id="totalCount">0</strong>
+      </div>
+
+      <div class="summary-item">
+        <span data-i18n="okDocuments">OK</span>
+        <strong id="okCount">0</strong>
+      </div>
+
+      <div class="summary-item">
+        <span data-i18n="blockingIssues">Blocking</span>
+        <strong id="blockingCount">0</strong>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- STEP 5 -->
+  <section id="generateSection" class="card hidden">
+
+    <div class="section-title">
+
+      <span class="step-number">5</span>
+
+      <div>
+
+        <h2 data-i18n="generatePackage">
+          Generate Tender Package
+        </h2>
+
+        <p data-i18n="generateHelp">
+          The button becomes available when all blocking issues are resolved.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <button
+      id="generateBtn"
+      class="primary-btn"
+      disabled
+    >
+      <span data-i18n="generateButton">
+        Generate Combined PDF
+      </span>
+    </button>
+
+
+    <div id="generateMessage" class="message hidden"></div>
+
+  </section>
+
+
+  <!-- BONUS / EXPORT -->
+  <section id="exportSection" class="card hidden">
+
+    <h2 data-i18n="exportChecklist">
+      Export Checklist
+    </h2>
+
+    <button
+      id="csvBtn"
+      class="secondary-btn"
+    >
+      <span data-i18n="downloadCsv">
+        Download CSV
+      </span>
+    </button>
+
+  </section>
+
+</main>
+
+
+<footer class="site-footer">
+
+  <p>
+    AI DevFest 2026 · Tender Document Package Builder
+  </p>
+
+  <p data-i18n="privacyNote">
+    Your documents stay in your browser and are not uploaded to a server.
+  </p>
+
+</footer>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
